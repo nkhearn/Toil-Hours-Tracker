@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.io.File
 import java.time.LocalDate
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -79,13 +80,10 @@ class ToilTrackerLogic(private val context: Context) {
         }
 
         var endDate = try {
-            LocalDate.of(targetDate.year, config.year_end_month, config.year_end_day)
+            val yearMonth = YearMonth.of(targetDate.year, config.year_end_month)
+            yearMonth.atDay(config.year_end_day.coerceIn(1, yearMonth.lengthOfMonth()))
         } catch (e: Exception) {
-            if (config.year_end_month == 2 && config.year_end_day >= 29) {
-                LocalDate.of(targetDate.year, 2, 28)
-            } else {
-                LocalDate.of(targetDate.year, config.year_end_month, 1).minusDays(1)
-            }
+            LocalDate.of(targetDate.year, config.year_end_month, 1).with(java.time.temporal.TemporalAdjusters.lastDayOfMonth())
         }
 
         if (endDate.isBefore(startDate)) {
@@ -104,7 +102,7 @@ class ToilTrackerLogic(private val context: Context) {
         var expectedDefaultWorkedToday = 0.0
         var currentDay = startDate
         while (!currentDay.isAfter(finalCalcEndToday)) {
-            val dayName = days[currentDay.dayOfWeek.value - 1]
+            val dayName = days[if (currentDay.dayOfWeek.value == 7) 6 else currentDay.dayOfWeek.value - 1]
             expectedDefaultWorkedToday += config.default_week[dayName] ?: 0.0
             currentDay = currentDay.plusDays(1)
         }
