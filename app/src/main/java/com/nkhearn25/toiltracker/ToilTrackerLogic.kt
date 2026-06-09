@@ -104,7 +104,7 @@ class ToilTrackerLogic(private val context: Context) {
         var expectedDefaultWorkedToday = 0.0
         var currentDay = startDate
         while (!currentDay.isAfter(finalCalcEndToday)) {
-            val dayName = days[if (currentDay.dayOfWeek.value == 7) 6 else currentDay.dayOfWeek.value - 1]
+            val dayName = days[currentDay.dayOfWeek.value - 1]
             expectedDefaultWorkedToday += config.default_week[dayName] ?: 0.0
             currentDay = currentDay.plusDays(1)
         }
