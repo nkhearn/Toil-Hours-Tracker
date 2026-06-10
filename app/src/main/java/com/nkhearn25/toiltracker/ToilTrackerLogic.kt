@@ -191,7 +191,7 @@ class ToilTrackerLogic(private val context: Context) {
 
         while (!runDt.isAfter(finalCalcEndToday)) {
             tempContractedAccum += dailyContractRate
-            val dayName = days[if (runDt.dayOfWeek.value == 7) 6 else runDt.dayOfWeek.value - 1]
+            val dayName = days[runDt.dayOfWeek.value - 1]
             val dayBase = config.default_week[dayName] ?: 0.0
             val dateStr = runDt.format(formatter)
 
