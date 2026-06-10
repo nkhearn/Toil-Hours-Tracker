@@ -69,6 +69,47 @@ class ToilTrackerLogic(private val context: Context) {
         dbFile.writeText(gson.toJson(config))
     }
 
+    fun updateConfig(
+        contractHours: Double,
+        startDate: String,
+        endMonth: Int,
+        endDay: Int,
+        defaultWeekJson: String
+    ): Config {
+        val config = loadData()
+        config.contract_hours = contractHours
+        config.start_date = startDate
+        config.year_end_month = endMonth
+        config.year_end_day = endDay
+
+        val type = object : TypeToken<MutableMap<String, Double>>() {}.type
+        val newDefaultWeek: MutableMap<String, Double>? = gson.fromJson(defaultWeekJson, type)
+        if (newDefaultWeek != null) {
+            config.default_week = newDefaultWeek
+        }
+
+        saveData(config)
+        return config
+    }
+
+    fun saveAdjustment(date: String, offset: Double, note: String): Config {
+        val config = loadData()
+        if (offset == 0.0) {
+            config.adjustments.remove(date)
+        } else {
+            config.adjustments[date] = Adjustment(offset, note)
+        }
+        saveData(config)
+        return config
+    }
+
+    fun deleteAdjustment(date: String): Config {
+        val config = loadData()
+        config.adjustments.remove(date)
+        saveData(config)
+        return config
+    }
+
     fun calculateMetrics(config: Config): Map<String, Any> {
         val targetDate = LocalDate.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")

@@ -40,38 +40,21 @@ class MainActivity : AppCompatActivity() {
 
         @JavascriptInterface
         fun updateConfig(contractHours: Double, startDate: String, endMonth: Int, endDay: Int, defaultWeekJson: String): String {
-            val config = logic.loadData()
-            config.contract_hours = contractHours
-            config.start_date = startDate
-            config.year_end_month = endMonth
-            config.year_end_day = endDay
-
-            val type = object : TypeToken<MutableMap<String, Double>>() {}.type
-            config.default_week = gson.fromJson(defaultWeekJson, type)
-
-            logic.saveData(config)
+            val config = logic.updateConfig(contractHours, startDate, endMonth, endDay, defaultWeekJson)
             val metrics = logic.calculateMetrics(config)
             return gson.toJson(mapOf("status" to "success", "metrics" to metrics))
         }
 
         @JavascriptInterface
         fun saveAdjustment(date: String, offset: Double, note: String): String {
-            val config = logic.loadData()
-            if (offset == 0.0) {
-                config.adjustments.remove(date)
-            } else {
-                config.adjustments[date] = ToilTrackerLogic.Adjustment(offset, note)
-            }
-            logic.saveData(config)
+            val config = logic.saveAdjustment(date, offset, note)
             val metrics = logic.calculateMetrics(config)
             return gson.toJson(mapOf("status" to "success", "metrics" to metrics))
         }
 
         @JavascriptInterface
         fun deleteAdjustment(date: String): String {
-            val config = logic.loadData()
-            config.adjustments.remove(date)
-            logic.saveData(config)
+            val config = logic.deleteAdjustment(date)
             val metrics = logic.calculateMetrics(config)
             return gson.toJson(mapOf("status" to "success", "metrics" to metrics))
         }
