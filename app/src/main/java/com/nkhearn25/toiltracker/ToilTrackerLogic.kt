@@ -148,26 +148,22 @@ class ToilTrackerLogic(private val context: Context) {
             currentDay = currentDay.plusDays(1)
         }
 
-        var totalAdjustmentsToday = 0.0
-        val adjustmentsInPeriod = mutableListOf<Map<String, Any>>()
-
-        for ((dateStr, adj) in config.adjustments) {
-            try {
-                val adjDate = LocalDate.parse(dateStr, formatter)
+        val adjustmentsInPeriod = config.adjustments.mapNotNull { (dateStr, adj) ->
+            runCatching { LocalDate.parse(dateStr, formatter) }.getOrNull()?.let { adjDate ->
                 if (!adjDate.isBefore(startDate) && !adjDate.isAfter(endDate)) {
-                    val valHours = adj.hours
-                    adjustmentsInPeriod.add(mapOf(
+                    mapOf(
                         "date" to dateStr,
-                        "adjustment" to valHours,
+                        "dateObj" to adjDate,
+                        "adjustment" to adj.hours,
                         "note" to adj.notes
-                    ))
+                    )
+                } else null
+            }
+        }.sortedByDescending { it["date"] as String }
 
-                    if (!adjDate.isAfter(finalCalcEndToday)) {
-                        totalAdjustmentsToday += valHours
-                    }
-                }
-            } catch (e: Exception) { continue }
-        }
+        val totalAdjustmentsToday = adjustmentsInPeriod
+            .filter { !(it["dateObj"] as LocalDate).isAfter(finalCalcEndToday) }
+            .sumOf { it["adjustment"] as Double }
 
         val actualWorkedToday = expectedDefaultWorkedToday + totalAdjustmentsToday
         val runningBalance = actualWorkedToday - expectedContractedToday
@@ -187,8 +183,6 @@ class ToilTrackerLogic(private val context: Context) {
         val totalAdjustmentsYe = adjustmentsInPeriod.sumOf { it["adjustment"] as Double }
         val actualWorkedYe = expectedDefaultWorkedYe + totalAdjustmentsYe
         val forecastBalance = actualWorkedYe - expectedContractedYe
-
-        adjustmentsInPeriod.sortByDescending { it["date"] as String }
 
         val chartData = mutableListOf<Map<String, Any>>()
         var runDt = startDate
