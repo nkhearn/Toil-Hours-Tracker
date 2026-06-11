@@ -46,7 +46,7 @@ The Android version offers a robust, dedicated experience for mobile users.
 <a name="standalone-web-app"></a>
 ## 🌐 Standalone Web App
 
-Need a quick way to track hours on your desktop or via a server? Use the included Flask application or the standalone HTML file.
+Need a quick way to track hours on your desktop or via a server? Use the included Flask application.
 
 ### Quick Start (Web)
 ```bash
