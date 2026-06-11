@@ -13,7 +13,7 @@
 - 📊 **Dynamic Progression:** Real-time visual tracking of your worked hours vs. contractual baseline.
 - 🔮 **Balance Forecasting:** Predict your year-end hour balance based on current trends.
 - 📱 **Native Performance:** Fully optimized Android application with a seamless WebView bridge.
-- ☁️ **Self-Contained:** A standalone HTML system that works anywhere.
+- ☁️ **Web Companion:** A lightweight Flask-based web application for desktop use.
 - 🌙 **Dark Mode First:** Premium dark aesthetic for reduced eye strain.
 
 ---
