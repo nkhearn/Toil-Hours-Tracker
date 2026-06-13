@@ -88,8 +88,9 @@ fun CalendarGrid(
     val daysInMonth = currentMonth.lengthOfMonth()
 
     val today = LocalDate.now()
-    @Suppress("UNCHECKED_CAST")
-    val adjustmentsList = metrics["adjustments_list"] as? List<Map<String, Any>> ?: emptyList()
+    val adjustmentsList = (metrics["adjustments_list"] as? List<*>)
+        ?.filterIsInstance<Map<*, *>>()
+        ?: emptyList()
     val defaultWeek = config.default_week ?: emptyMap()
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
