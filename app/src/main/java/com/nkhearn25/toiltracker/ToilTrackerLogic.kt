@@ -9,8 +9,8 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-class ToilTrackerLogic(private val context: Context) {
-    private val dbFile = File(context.filesDir, "hour_tracker_db.json")
+class ToilTrackerLogic(private val context: Context? = null) {
+    private val dbFile = context?.let { File(it.filesDir, "hour_tracker_db.json") }
     private val gson = Gson()
     private val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
@@ -20,8 +20,8 @@ class ToilTrackerLogic(private val context: Context) {
         var start_date: String,
         var year_end_month: Int,
         var year_end_day: Int,
-        var default_week: MutableMap<String, Double>,
-        var adjustments: MutableMap<String, Adjustment>
+        var default_week: MutableMap<String, Double>?,
+        var adjustments: MutableMap<String, Adjustment>?
     )
 
     fun loadData(): Config {
@@ -36,7 +36,7 @@ class ToilTrackerLogic(private val context: Context) {
             adjustments = mutableMapOf()
         )
 
-        if (!dbFile.exists()) return fallbackConfig
+        if (dbFile == null || !dbFile.exists()) return fallbackConfig
 
         return try {
             val json = dbFile.readText()
@@ -48,9 +48,10 @@ class ToilTrackerLogic(private val context: Context) {
                 data.default_week = fallbackConfig.default_week
                 updated = true
             }
+            val currentDefaultWeek = data.default_week!!
             for (day in days) {
-                if (!data.default_week.containsKey(day)) {
-                    data.default_week[day] = 0.0
+                if (!currentDefaultWeek.containsKey(day)) {
+                    currentDefaultWeek[day] = 0.0
                     updated = true
                 }
             }
@@ -66,7 +67,7 @@ class ToilTrackerLogic(private val context: Context) {
     }
 
     fun saveData(config: Config) {
-        dbFile.writeText(gson.toJson(config))
+        dbFile?.writeText(gson.toJson(config))
     }
 
     fun updateConfig(
@@ -94,18 +95,20 @@ class ToilTrackerLogic(private val context: Context) {
 
     fun saveAdjustment(date: String, offset: Double, note: String): Config {
         val config = loadData()
+        val adjustments = config.adjustments ?: mutableMapOf()
         if (offset == 0.0) {
-            config.adjustments.remove(date)
+            adjustments.remove(date)
         } else {
-            config.adjustments[date] = Adjustment(offset, note)
+            adjustments[date] = Adjustment(offset, note)
         }
+        config.adjustments = adjustments
         saveData(config)
         return config
     }
 
     fun deleteAdjustment(date: String): Config {
         val config = loadData()
-        config.adjustments.remove(date)
+        config.adjustments?.remove(date)
         saveData(config)
         return config
     }
@@ -142,13 +145,14 @@ class ToilTrackerLogic(private val context: Context) {
 
         var expectedDefaultWorkedToday = 0.0
         var currentDay = startDate
+        val defaultWeek = config.default_week ?: mutableMapOf()
         while (!currentDay.isAfter(finalCalcEndToday)) {
-            val dayName = days[if (currentDay.dayOfWeek.value == 7) 6 else currentDay.dayOfWeek.value - 1]
-            expectedDefaultWorkedToday += config.default_week[dayName] ?: 0.0
+            val dayName = days[currentDay.dayOfWeek.value - 1]
+            expectedDefaultWorkedToday += defaultWeek[dayName] ?: 0.0
             currentDay = currentDay.plusDays(1)
         }
 
-        val adjustmentsInPeriod = config.adjustments.mapNotNull { (dateStr, adj) ->
+        val adjustmentsInPeriod = (config.adjustments ?: mutableMapOf()).mapNotNull { (dateStr, adj) ->
             runCatching { LocalDate.parse(dateStr, formatter) }.getOrNull()?.let { adjDate ->
                 if (!adjDate.isBefore(startDate) && !adjDate.isAfter(endDate)) {
                     mapOf(
@@ -176,7 +180,7 @@ class ToilTrackerLogic(private val context: Context) {
         currentDay = startDate
         while (!currentDay.isAfter(endDate)) {
             val dayName = days[currentDay.dayOfWeek.value - 1]
-            expectedDefaultWorkedYe += config.default_week[dayName] ?: 0.0
+            expectedDefaultWorkedYe += defaultWeek[dayName] ?: 0.0
             currentDay = currentDay.plusDays(1)
         }
 
@@ -193,10 +197,10 @@ class ToilTrackerLogic(private val context: Context) {
         while (!runDt.isAfter(finalCalcEndToday)) {
             tempContractedAccum += dailyContractRate
             val dayName = days[runDt.dayOfWeek.value - 1]
-            val dayBase = config.default_week[dayName] ?: 0.0
+            val dayBase = defaultWeek[dayName] ?: 0.0
             val dateStr = runDt.format(formatter)
 
-            val adjustmentVal = config.adjustments[dateStr]?.hours ?: 0.0
+            val adjustmentVal = config.adjustments?.get(dateStr)?.hours ?: 0.0
             tempWorkedAccum += (dayBase + adjustmentVal)
 
             chartData.add(mapOf(
