@@ -190,7 +190,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
         var tempWorkedAccum = 0.0
         val dailyContractRate = weeklyContract / 7.0
 
-        while (!runDt.isAfter(finalCalcEndToday)) {
+        while (!runDt.isAfter(endDate)) {
             tempContractedAccum += dailyContractRate
             val dayName = days[runDt.dayOfWeek.value - 1]
             val dayBase = defaultWeek[dayName] ?: 0.0
@@ -199,10 +199,19 @@ class ToilTrackerLogic(private val context: Context? = null) {
             val adjustmentVal = config.adjustments?.get(dateStr)?.hours ?: 0.0
             tempWorkedAccum += (dayBase + adjustmentVal)
 
+            val workedToRecord = if (runDt.isAfter(finalCalcEndToday)) {
+                // For future dates, we show projected worked as a continuation of the last known worked
+                // Or maybe we don't show it at all? The requirement is "projection to year end".
+                // Let's keep recording it as is, but the balance displayed is for "Today".
+                Math.round(tempWorkedAccum * 10.0) / 10.0
+            } else {
+                Math.round(tempWorkedAccum * 10.0) / 10.0
+            }
+
             chartData.add(mapOf(
                 "date" to dateStr,
                 "contracted" to Math.round(tempContractedAccum * 10.0) / 10.0,
-                "worked" to Math.round(tempWorkedAccum * 10.0) / 10.0
+                "worked" to workedToRecord
             ))
             runDt = runDt.plusDays(1)
         }

@@ -153,7 +153,7 @@ def calculate_metrics(db, target_date=None):
     temp_worked_accum = 0.0
     daily_contract_rate = weekly_contract / 7.0
     
-    while run_dt <= calc_end_today:
+    while run_dt <= end_date:
         temp_contracted_accum += daily_contract_rate
         day_name = DAYS[run_dt.weekday()]
         day_base = float(default_week.get(day_name, 0.0))

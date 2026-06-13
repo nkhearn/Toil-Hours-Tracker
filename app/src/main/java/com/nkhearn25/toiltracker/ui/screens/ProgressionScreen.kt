@@ -21,6 +21,14 @@ import com.patrykandpatrick.vico.core.entry.entryOf
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import com.patrykandpatrick.vico.compose.chart.line.lineSpec
+import com.patrykandpatrick.vico.core.chart.decoration.ThresholdLine
+import com.patrykandpatrick.vico.core.component.shape.Shapes
+import com.patrykandpatrick.vico.core.component.shape.DashedShape
+import com.patrykandpatrick.vico.compose.component.shapeComponent
+import com.patrykandpatrick.vico.compose.component.lineComponent
+import com.patrykandpatrick.vico.compose.component.textComponent
+import com.patrykandpatrick.vico.compose.dimensions.dimensionsOf
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun ProgressionScreen(metrics: Map<String, Any>) {
@@ -38,6 +46,35 @@ fun ProgressionScreen(metrics: Map<String, Any>) {
     val modelProducer = remember { ChartEntryModelProducer(listOf(workedEntries, contractedEntries)) }
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val displayFormatter = DateTimeFormatter.ofPattern("dd MMM")
+
+    val todayStr = LocalDate.now().format(formatter)
+    val todayIndex = chartData.indexOfFirst { it["date"] == todayStr }.toFloat()
+
+    val thresholdLine = if (todayIndex >= 0) {
+        ThresholdLine(
+            thresholdValue = todayIndex,
+            lineComponent = lineComponent(
+                color = Slate500.copy(alpha = 0.5f),
+                thickness = 2.dp,
+                shape = DashedShape(
+                    shape = Shapes.rectShape,
+                    dashLengthDp = 4.dp.value,
+                    gapLengthDp = 4.dp.value
+                )
+            ),
+            labelComponent = textComponent(
+                color = Color.White,
+                background = shapeComponent(
+                    shape = Shapes.rectShape,
+                    color = Slate700
+                ),
+                padding = dimensionsOf(4.dp, 2.dp),
+                margins = dimensionsOf(0.dp, 0.dp, 0.dp, 4.dp),
+                textSize = 10.sp
+            ),
+            thresholdLabel = "Today"
+        )
+    } else null
 
     val bottomAxisValueFormatter = AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, _ ->
         val index = value.toInt().coerceIn(0, chartData.size - 1)
@@ -71,7 +108,8 @@ fun ProgressionScreen(metrics: Map<String, Any>) {
                             lineSpec(
                                 lineColor = Blue500,
                             )
-                        )
+                        ),
+                        decorations = listOfNotNull(thresholdLine)
                     ),
                     chartModelProducer = modelProducer,
                     startAxis = rememberStartAxis(
