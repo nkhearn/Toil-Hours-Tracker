@@ -69,7 +69,7 @@ fun SettingsScreen(
             )
         }
 
-        Divider(color = Slate800)
+        HorizontalDivider(color = Slate800)
         Text(text = "Default Standard Weekly Schedule", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = Slate400)
 
         days.chunked(2).forEach { pair ->

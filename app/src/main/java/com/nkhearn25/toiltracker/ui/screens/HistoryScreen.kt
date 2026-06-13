@@ -20,7 +20,9 @@ fun HistoryScreen(
     metrics: Map<String, Any>,
     onDelete: (String) -> Unit
 ) {
-    val adjustments = metrics["adjustments_list"] as? List<Map<String, Any>> ?: emptyList()
+    val adjustments = (metrics["adjustments_list"] as? List<*>)
+        ?.filterIsInstance<Map<*, *>>()
+        ?: emptyList()
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val displayFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")

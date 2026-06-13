@@ -24,7 +24,9 @@ import com.patrykandpatrick.vico.compose.chart.line.lineSpec
 
 @Composable
 fun ProgressionScreen(metrics: Map<String, Any>) {
-    val chartData = metrics["chart_data"] as? List<Map<String, Any>> ?: emptyList()
+    val chartData = (metrics["chart_data"] as? List<*>)
+        ?.filterIsInstance<Map<*, *>>()
+        ?: emptyList()
 
     val workedEntries = chartData.mapIndexed { index, map ->
         entryOf(index.toFloat(), (map["worked"] as Double).toFloat())

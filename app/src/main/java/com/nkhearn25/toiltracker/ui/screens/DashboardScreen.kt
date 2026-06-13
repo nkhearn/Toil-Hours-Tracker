@@ -101,7 +101,7 @@ fun DashboardScreen(
                     fontWeight = FontWeight.Bold
                 )
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp), color = Slate800)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Slate800)
 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("Forecasted Year End:", style = MaterialTheme.typography.bodySmall, color = Slate400)
@@ -119,7 +119,7 @@ fun DashboardScreen(
                     )
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp), color = Slate800)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Slate800)
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                     StatItem(label = "Worked", value = "${actualWorked}h")
@@ -127,7 +127,7 @@ fun DashboardScreen(
                     StatItem(label = "Progress", value = "$progressPct%")
                 }
 
-                Divider(modifier = Modifier.padding(vertical = 8.dp), color = Slate800)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Slate800)
 
                 Text(
                     text = "Tracking Cycle: $startDate to $endDate",
