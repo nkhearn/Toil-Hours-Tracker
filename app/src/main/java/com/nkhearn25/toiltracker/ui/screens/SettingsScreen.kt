@@ -1,31 +1,43 @@
 package com.nkhearn25.toiltracker.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.nkhearn25.toiltracker.ui.theme.*
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     config: com.nkhearn25.toiltracker.ToilTrackerLogic.Config,
     onSave: (Double, String, Int, Int, Map<String, Double>) -> Unit
 ) {
-    var contractHours by remember { mutableStateOf(config.contract_hours.toString()) }
+    var contractHours by remember { mutableStateOf(TextFieldValue(config.contract_hours.toString())) }
     var startDate by remember { mutableStateOf(config.start_date) }
-    var endMonth by remember { mutableStateOf(config.year_end_month) }
-    var endDay by remember { mutableStateOf(config.year_end_day) }
+    var endMonth by remember { mutableStateOf(TextFieldValue(config.year_end_month.toString())) }
+    var endDay by remember { mutableStateOf(TextFieldValue(config.year_end_day.toString())) }
+
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-    val defaultWeek = remember { mutableStateMapOf<String, String>().apply {
-        days.forEach { day -> put(day, (config.default_week?.get(day) ?: 0.0).toString()) }
+    val defaultWeek = remember { mutableStateMapOf<String, TextFieldValue>().apply {
+        days.forEach { day -> put(day, TextFieldValue((config.default_week?.get(day) ?: 0.0).toString())) }
     } }
 
     Column(
@@ -42,30 +54,91 @@ fun SettingsScreen(
             onValueChange = { contractHours = it },
             label = { Text("Weekly Contracted Hours") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                        contractHours = contractHours.copy(selection = TextRange(0, contractHours.text.length))
+                    }
+                }
         )
 
         OutlinedTextField(
             value = startDate,
-            onValueChange = { startDate = it },
-            label = { Text("Cycle Custom Start Date (YYYY-MM-DD)") },
-            modifier = Modifier.fillMaxWidth()
+            onValueChange = { },
+            label = { Text("Cycle Custom Start Date") },
+            readOnly = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true },
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                }
+            }
         )
+
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = LocalDate.parse(startDate).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            )
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            startDate = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate().toString()
+                        }
+                        showDatePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Cancel")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
-                value = endMonth.toString(),
-                onValueChange = { endMonth = it.toIntOrNull() ?: 1 },
+                value = endMonth,
+                onValueChange = { endMonth = it },
                 label = { Text("End Month") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            endMonth = endMonth.copy(selection = TextRange(0, endMonth.text.length))
+                        }
+                    }
             )
             OutlinedTextField(
-                value = endDay.toString(),
-                onValueChange = { endDay = it.toIntOrNull() ?: 1 },
+                value = endDay,
+                onValueChange = { endDay = it },
                 label = { Text("End Day") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            endDay = endDay.copy(selection = TextRange(0, endDay.text.length))
+                        }
+                    }
             )
         }
 
@@ -76,11 +149,18 @@ fun SettingsScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 pair.forEach { day ->
                     OutlinedTextField(
-                        value = defaultWeek[day] ?: "0.0",
+                        value = defaultWeek[day] ?: TextFieldValue("0.0"),
                         onValueChange = { defaultWeek[day] = it },
                         label = { Text(day) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    val current = defaultWeek[day] ?: TextFieldValue("0.0")
+                                    defaultWeek[day] = current.copy(selection = TextRange(0, current.text.length))
+                                }
+                            }
                     )
                 }
                 if (pair.size == 1) Spacer(modifier = Modifier.weight(1f))
@@ -89,8 +169,14 @@ fun SettingsScreen(
 
         Button(
             onClick = {
-                val week = defaultWeek.mapValues { it.value.toDoubleOrNull() ?: 0.0 }
-                onSave(contractHours.toDoubleOrNull() ?: 21.0, startDate, endMonth, endDay, week)
+                val week = defaultWeek.mapValues { it.value.text.toDoubleOrNull() ?: 0.0 }
+                onSave(
+                    contractHours.text.toDoubleOrNull() ?: 21.0,
+                    startDate,
+                    endMonth.text.toIntOrNull() ?: 1,
+                    endDay.text.toIntOrNull() ?: 1,
+                    week
+                )
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)

@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -50,7 +52,14 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
                 items.forEach { screen ->
                     NavigationBarItem(
                         icon = { Icon(screen.icon, contentDescription = null) },
-                        label = { Text(screen.label) },
+                        label = {
+                            Text(
+                                text = screen.label,
+                                fontSize = 10.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        },
                         selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                         onClick = {
                             navController.navigate(screen.route) {
@@ -98,7 +107,7 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
                         config = config,
                         onSave = { date, offset, note ->
                             viewModel.saveAdjustment(date, offset, note)
-                            navController.navigate(Screen.History.route)
+                            navController.popBackStack(Screen.Calendar.route, inclusive = false)
                         }
                     )
                 }

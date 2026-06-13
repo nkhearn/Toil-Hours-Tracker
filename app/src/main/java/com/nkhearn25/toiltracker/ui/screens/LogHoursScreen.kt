@@ -1,19 +1,28 @@
 package com.nkhearn25.toiltracker.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.nkhearn25.toiltracker.ui.theme.*
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogHoursScreen(
     initialDate: LocalDate,
@@ -22,16 +31,17 @@ fun LogHoursScreen(
 ) {
     var date by remember { mutableStateOf(initialDate) }
     var adjMode by remember { mutableStateOf("set") } // "set" or "offset"
-    var hoursInput by remember { mutableStateOf("") }
+    var hoursInput by remember { mutableStateOf(TextFieldValue("")) }
     var noteInput by remember { mutableStateOf("") }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     val dayName = daysOfWeek[date.dayOfWeek.value - 1]
     val dayDefault = config.default_week?.get(dayName) ?: 0.0
 
     LaunchedEffect(date, adjMode) {
-        if (adjMode == "set" && hoursInput.isEmpty()) {
-            hoursInput = dayDefault.toString()
+        if (adjMode == "set" && hoursInput.text.isEmpty()) {
+            hoursInput = TextFieldValue(dayDefault.toString())
         }
     }
 
@@ -44,14 +54,56 @@ fun LogHoursScreen(
     ) {
         Text(text = "📅 Custom Calendar Adjustments", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
 
-        // Date Picker (simplified as Text for now, in real app would use DatePickerDialog)
+        // Date Picker
         OutlinedTextField(
             value = date.toString(),
             onValueChange = { },
             label = { Text("Target Date") },
             readOnly = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true },
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.DateRange, contentDescription = "Select Date")
+                }
+            }
         )
+
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            )
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        datePickerState.selectedDateMillis?.let {
+                            date = Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate()
+                        }
+                        showDatePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Cancel")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
 
         Text(
             text = "Standard hours scheduled on ${dayName}s: ${dayDefault}h",
@@ -87,7 +139,13 @@ fun LogHoursScreen(
                 Text(if (adjMode == "set") "Total Hours Actually Worked" else "Offset Amount (+ or -)")
             },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    if (focusState.isFocused) {
+                        hoursInput = hoursInput.copy(selection = TextRange(0, hoursInput.text.length))
+                    }
+                }
         )
 
         OutlinedTextField(
@@ -100,7 +158,7 @@ fun LogHoursScreen(
 
         Button(
             onClick = {
-                val inputVal = hoursInput.toDoubleOrNull() ?: 0.0
+                val inputVal = hoursInput.text.toDoubleOrNull() ?: 0.0
                 val offsetVal = if (adjMode == "set") inputVal - dayDefault else inputVal
                 onSave(date.toString(), offsetVal, noteInput)
                 noteInput = ""
