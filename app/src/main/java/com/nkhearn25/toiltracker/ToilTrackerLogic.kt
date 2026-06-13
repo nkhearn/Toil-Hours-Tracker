@@ -15,6 +15,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
     private val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 
     data class Adjustment(val hours: Double, val notes: String)
+    private data class InternalAdjustment(val date: LocalDate, val dateStr: String, val hours: Double, val notes: String)
     data class Config(
         var contract_hours: Double,
         var start_date: String,
@@ -155,21 +156,14 @@ class ToilTrackerLogic(private val context: Context? = null) {
         val adjustmentsInPeriod = config.adjustments.orEmpty().mapNotNull { (dateStr, adj) ->
             runCatching { LocalDate.parse(dateStr, formatter) }.getOrNull()?.let { adjDate ->
                 if (!adjDate.isBefore(startDate) && !adjDate.isAfter(endDate)) {
-                    mapOf(
-                        "date" to dateStr,
-                        "adjustment" to adj.hours,
-                        "note" to adj.notes
-                    )
+                    InternalAdjustment(adjDate, dateStr, adj.hours, adj.notes)
                 } else null
             }
-        }.sortedByDescending { it["date"] as String }
+        }.sortedByDescending { it.dateStr }
 
         val totalAdjustmentsToday = adjustmentsInPeriod
-            .filter {
-                val adjDate = LocalDate.parse(it["date"] as String, formatter)
-                !adjDate.isAfter(finalCalcEndToday)
-            }
-            .sumOf { it["adjustment"] as Double }
+            .filter { !it.date.isAfter(finalCalcEndToday) }
+            .sumOf { it.hours }
 
         val actualWorkedToday = expectedDefaultWorkedToday + totalAdjustmentsToday
         val runningBalance = actualWorkedToday - expectedContractedToday
@@ -186,7 +180,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
             currentDay = currentDay.plusDays(1)
         }
 
-        val totalAdjustmentsYe = adjustmentsInPeriod.sumOf { it["adjustment"] as Double }
+        val totalAdjustmentsYe = adjustmentsInPeriod.sumOf { it.hours }
         val actualWorkedYe = expectedDefaultWorkedYe + totalAdjustmentsYe
         val forecastBalance = actualWorkedYe - expectedContractedYe
 
@@ -213,6 +207,14 @@ class ToilTrackerLogic(private val context: Context? = null) {
             runDt = runDt.plusDays(1)
         }
 
+        val adjustmentsListForWebView = adjustmentsInPeriod.map {
+            mapOf(
+                "date" to it.dateStr,
+                "adjustment" to it.hours,
+                "note" to it.notes
+            )
+        }
+
         return mapOf(
             "start_date" to startDate.format(formatter),
             "end_date" to endDate.format(formatter),
@@ -225,7 +227,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
             "actual_worked" to Math.round(actualWorkedToday * 10.0) / 10.0,
             "balance" to Math.round(runningBalance * 10.0) / 10.0,
             "forecast_balance" to Math.round(forecastBalance * 10.0) / 10.0,
-            "adjustments_list" to adjustmentsInPeriod,
+            "adjustments_list" to adjustmentsListForWebView,
             "chart_data" to chartData
         )
     }
