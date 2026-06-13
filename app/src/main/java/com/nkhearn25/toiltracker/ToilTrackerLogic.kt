@@ -40,7 +40,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
 
         return try {
             val json = dbFile.readText()
-            val data = gson.fromJson(json, Config::class.java)
+            val data = gson.fromJson(json, Config::class.java) ?: fallbackConfig
 
             // Migration / safety checks
             var updated = false
@@ -157,7 +157,6 @@ class ToilTrackerLogic(private val context: Context? = null) {
                 if (!adjDate.isBefore(startDate) && !adjDate.isAfter(endDate)) {
                     mapOf(
                         "date" to dateStr,
-                        "dateObj" to adjDate,
                         "adjustment" to adj.hours,
                         "note" to adj.notes
                     )
@@ -166,7 +165,10 @@ class ToilTrackerLogic(private val context: Context? = null) {
         }.sortedByDescending { it["date"] as String }
 
         val totalAdjustmentsToday = adjustmentsInPeriod
-            .filter { !(it["dateObj"] as LocalDate).isAfter(finalCalcEndToday) }
+            .filter {
+                val adjDate = LocalDate.parse(it["date"] as String, formatter)
+                !adjDate.isAfter(finalCalcEndToday)
+            }
             .sumOf { it["adjustment"] as Double }
 
         val actualWorkedToday = expectedDefaultWorkedToday + totalAdjustmentsToday
