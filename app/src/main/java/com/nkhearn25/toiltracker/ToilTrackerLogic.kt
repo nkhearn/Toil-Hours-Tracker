@@ -207,7 +207,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
             runDt = runDt.plusDays(1)
         }
 
-        val adjustmentsListForWebView = adjustmentsInPeriod.map {
+        val adjustmentsList = adjustmentsInPeriod.map {
             mapOf(
                 "date" to it.dateStr,
                 "adjustment" to it.hours,
@@ -227,7 +227,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
             "actual_worked" to Math.round(actualWorkedToday * 10.0) / 10.0,
             "balance" to Math.round(runningBalance * 10.0) / 10.0,
             "forecast_balance" to Math.round(forecastBalance * 10.0) / 10.0,
-            "adjustments_list" to adjustmentsListForWebView,
+            "adjustments_list" to adjustmentsList,
             "chart_data" to chartData
         )
     }
