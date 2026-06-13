@@ -2,6 +2,8 @@ package com.nkhearn25.toiltracker.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,8 +23,8 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Dashboard : Screen("dashboard", "Home", Icons.Default.Home)
     object Calendar : Screen("calendar", "Calendar", Icons.Default.DateRange)
     object LogHours : Screen("log_hours", "Log", Icons.Default.Add)
-    object History : Screen("history", "History", Icons.Default.List)
-    object Progression : Screen("progression", "Progress", Icons.Default.TrendingUp)
+    object History : Screen("history", "History", Icons.AutoMirrored.Filled.List)
+    object Progression : Screen("progression", "Progress", Icons.AutoMirrored.Filled.TrendingUp)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 

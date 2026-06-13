@@ -17,6 +17,7 @@ class MainActivity : ComponentActivity() {
 
         val logic = ToilTrackerLogic(this)
         viewModel = ViewModelProvider(this, object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return ToilTrackerViewModel(logic) as T
             }

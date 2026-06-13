@@ -20,6 +20,7 @@ fun HistoryScreen(
     metrics: Map<String, Any>,
     onDelete: (String) -> Unit
 ) {
+    @Suppress("UNCHECKED_CAST")
     val adjustments = metrics["adjustments_list"] as? List<Map<String, Any>> ?: emptyList()
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val displayFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy")

@@ -24,6 +24,7 @@ import com.patrykandpatrick.vico.compose.chart.line.lineSpec
 
 @Composable
 fun ProgressionScreen(metrics: Map<String, Any>) {
+    @Suppress("UNCHECKED_CAST")
     val chartData = metrics["chart_data"] as? List<Map<String, Any>> ?: emptyList()
 
     val workedEntries = chartData.mapIndexed { index, map ->

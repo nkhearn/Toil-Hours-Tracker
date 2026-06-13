@@ -8,8 +8,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,7 +45,7 @@ fun CalendarScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
-                Icon(Icons.Default.ArrowBack, contentDescription = "Previous Month", tint = Slate400)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Previous Month", tint = Slate400)
             }
             Text(
                 text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
@@ -54,7 +54,7 @@ fun CalendarScreen(
                 color = Slate200
             )
             IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
-                Icon(Icons.Default.ArrowForward, contentDescription = "Next Month", tint = Slate400)
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next Month", tint = Slate400)
             }
         }
 
@@ -88,6 +88,7 @@ fun CalendarGrid(
     val daysInMonth = currentMonth.lengthOfMonth()
 
     val today = LocalDate.now()
+    @Suppress("UNCHECKED_CAST")
     val adjustmentsList = metrics["adjustments_list"] as? List<Map<String, Any>> ?: emptyList()
     val defaultWeek = config.default_week ?: emptyMap()
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
