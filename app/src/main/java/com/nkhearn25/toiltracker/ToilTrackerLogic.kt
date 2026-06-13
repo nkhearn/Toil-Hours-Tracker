@@ -152,7 +152,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
             currentDay = currentDay.plusDays(1)
         }
 
-        val adjustmentsInPeriod = (config.adjustments ?: mutableMapOf()).mapNotNull { (dateStr, adj) ->
+        val adjustmentsInPeriod = config.adjustments.orEmpty().mapNotNull { (dateStr, adj) ->
             runCatching { LocalDate.parse(dateStr, formatter) }.getOrNull()?.let { adjDate ->
                 if (!adjDate.isBefore(startDate) && !adjDate.isAfter(endDate)) {
                     mapOf(
