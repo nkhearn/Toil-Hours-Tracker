@@ -43,12 +43,4 @@ jobs:
         with:
           name: Toil-Hours-Tracker-Release
           path: app/build/outputs/apk/release/app-release-unsigned.apk
-          name: Toil-Hours-Tracker-Debug
-          path: app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Upload Standard Release Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Toil-Hours-Tracker-Release
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
           
