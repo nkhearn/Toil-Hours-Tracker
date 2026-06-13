@@ -1,0 +1,45 @@
+name: Build Toil-Hours-Tracker
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant Execute Permission for Gradle
+        run: chmod\ +x\ gradlew
+
+      - name: Compile Debug Release
+        run: ./gradlew\ assembleDebug
+
+      - name: Compile Standard Release
+        run: ./gradlew\ assembleRelease
+
+      - name: Upload Debug Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Toil-Hours-Tracker-Debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Standard Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Toil-Hours-Tracker-Release
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          
