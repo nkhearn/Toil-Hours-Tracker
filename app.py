@@ -694,6 +694,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 
         function changeMonth(delta) {
+            currentCalendarDate.setDate(1);
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
             renderCalendar();
         }
