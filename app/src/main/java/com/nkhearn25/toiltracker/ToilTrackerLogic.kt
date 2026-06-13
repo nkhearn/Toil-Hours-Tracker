@@ -139,7 +139,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
         val finalCalcEndToday = if (calcEndToday.isBefore(startDate)) startDate else calcEndToday
 
         val daysElapsed = ChronoUnit.DAYS.between(startDate, finalCalcEndToday) + 1
-        val weeksElapsed = daysElapsed.toDouble() / 7.0
+        val weeksElapsed = (daysElapsed - 1).toDouble() / 7.0
 
         val weeklyContract = config.contract_hours
         val expectedContractedToday = weeklyContract * weeksElapsed
@@ -169,7 +169,7 @@ class ToilTrackerLogic(private val context: Context? = null) {
         val runningBalance = actualWorkedToday - expectedContractedToday
 
         val daysTotal = ChronoUnit.DAYS.between(startDate, endDate) + 1
-        val weeksTotal = daysTotal.toDouble() / 7.0
+        val weeksTotal = (daysTotal - 1).toDouble() / 7.0
         val expectedContractedYe = weeklyContract * weeksTotal
 
         var expectedDefaultWorkedYe = 0.0
