@@ -88,6 +88,7 @@
         <!-- TABS CONTROLLER -->
         <div class="flex border-b border-slate-800 text-sm">
             <button onclick="switchTab('adjust')" id="tabBtn-adjust" class="flex-1 py-3 text-center border-b-2 border-blue-500 font-semibold text-blue-500 transition">Log Hours</button>
+            <button onclick="switchTab('calendar')" id="tabBtn-calendar" class="flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">Calendar</button>
             <button onclick="switchTab('history')" id="tabBtn-history" class="flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">History</button>
             <button onclick="switchTab('chart')" id="tabBtn-chart" class="flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition">Progression</button>
         </div>
@@ -139,6 +140,35 @@
                     <button id="saveAdjBtn" onclick="submitAdjustment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-blue-500/20">
                         💾 Save Calendar Entry
                     </button>
+                </div>
+            </div>
+        </div>
+
+                <!-- TAB CONTENT: MONTHLY CALENDAR -->
+        <div id="tabContent-calendar" class="hidden space-y-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+                <div class="flex items-center justify-between mb-4">
+                    <button onclick="changeMonth(-1)" class="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400">
+                        &larr;
+                    </button>
+                    <h3 id="calendarMonthYear" class="font-bold text-lg text-slate-200">Month Year</h3>
+                    <button onclick="changeMonth(1)" class="p-2 hover:bg-slate-800 rounded-lg transition text-slate-400">
+                        &rarr;
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Mon</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Tue</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Wed</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Thu</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Fri</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Sat</div>
+                    <div class="text-[10px] font-bold text-slate-500 uppercase">Sun</div>
+                </div>
+
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1">
+                    <!-- Loaded dynamically -->
                 </div>
             </div>
         </div>
@@ -229,6 +259,7 @@
         let appData = null;
         let adjMode = 'set'; // 'set' or 'offset'
         let chartInstance = null;
+        let currentCalendarDate = new Date();
         const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -314,15 +345,21 @@
         }
 
         function switchTab(tabId) {
-            ["adjust", "history", "chart"].forEach(t => {
-                document.getElementById(`tabContent-${t}`).classList.add("hidden");
-                document.getElementById(`tabBtn-${t}`).className = "flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition";
+            ["adjust", "history", "chart", "calendar"].forEach(t => {
+                const el = document.getElementById(`tabContent-${t}`);
+                if (el) el.classList.add("hidden");
+                const btn = document.getElementById(`tabBtn-${t}`);
+                if (btn) btn.className = "flex-1 py-3 text-center border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition";
             });
-            document.getElementById(`tabContent-${tabId}`).classList.remove("hidden");
-            document.getElementById(`tabBtn-${tabId}`).className = "flex-1 py-3 text-center border-b-2 border-blue-500 font-semibold text-blue-500 transition";
+            const contentEl = document.getElementById(`tabContent-${tabId}`);
+            if (contentEl) contentEl.classList.remove("hidden");
+            const btnEl = document.getElementById(`tabBtn-${tabId}`);
+            if (btnEl) btnEl.className = "flex-1 py-3 text-center border-b-2 border-blue-500 font-semibold text-blue-500 transition";
 
             if (tabId === 'chart') {
                 renderChart();
+            } else if (tabId === 'calendar') {
+                renderCalendar();
             }
         }
 
@@ -394,6 +431,73 @@
             if (document.getElementById("tabContent-chart").classList.contains("hidden") === false) {
                 renderChart();
             }
+        }
+
+
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function toLocalDateString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function renderCalendar() {
+            if (!appData) return;
+            const grid = document.getElementById("calendarGrid");
+            const monthYearLabel = document.getElementById("calendarMonthYear");
+            if (!grid || !monthYearLabel) return;
+
+            grid.innerHTML = "";
+
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            monthYearLabel.innerText = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(currentCalendarDate);
+
+            const firstDayOfMonth = new Date(year, month, 1);
+            let firstDayIdx = firstDayOfMonth.getDay() - 1;
+            if (firstDayIdx === -1) firstDayIdx = 6;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayStr = toLocalDateString(new Date());
+
+            for (let i = 0; i < firstDayIdx; i++) {
+                grid.innerHTML += `<div class="h-14"></div>`;
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, month, d);
+                const dateStr = toLocalDateString(date);
+                const dayIdx = date.getDay() === 0 ? 6 : date.getDay() - 1;
+                const dayName = DAYS[dayIdx];
+                const baseHours = appData.config.default_week[dayName] || 0;
+
+                const adj = appData.metrics.adjustments_list.find(a => a.date === dateStr);
+                const workedHours = baseHours + (adj ? adj.adjustment : 0);
+                const isToday = dateStr === todayStr;
+                const hasAdj = !!adj;
+
+                grid.innerHTML += `
+                    <div onclick="selectCalendarDate('${dateStr}')"
+                         class="h-14 flex flex-col items-center justify-center rounded-lg cursor-pointer transition
+                                ${isToday ? 'bg-slate-700' : 'hover:bg-slate-800'}
+                                ${hasAdj ? 'text-blue-400' : 'text-slate-200'}">
+                        <span class="text-xs font-bold">${d}</span>
+                        <span class="text-[10px] opacity-80">${workedHours}h</span>
+                    </div>
+                `;
+            }
+        }
+
+        function selectCalendarDate(dateStr) {
+            document.getElementById("adjDate").value = dateStr;
+            handleDateChange();
+            switchTab('adjust');
         }
 
         function buildHistoryList() {

@@ -180,6 +180,7 @@ class ToilTrackerLogic(private val context: Context) {
             currentDay = currentDay.plusDays(1)
         }
 
+        val totalAdjustmentsYe = adjustmentsInPeriod.sumOf { it["adjustment"] as Double }
         val actualWorkedYe = expectedDefaultWorkedYe + totalAdjustmentsYe
         val forecastBalance = actualWorkedYe - expectedContractedYe
 
