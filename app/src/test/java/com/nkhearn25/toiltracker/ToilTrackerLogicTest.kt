@@ -73,4 +73,30 @@ class ToilTrackerLogicTest {
 
         assertEquals((baseMetrics["balance"] as Double) + 2.0, metrics["balance"] as Double, 0.1)
     }
+
+    @Test
+    fun `test chart_data extends to year end`() {
+        val today = LocalDate.now()
+        val startDate = today.minusDays(10)
+        // Set year end to 5 days from today
+        val yearEnd = today.plusDays(5)
+        val config = ToilTrackerLogic.Config(
+            contract_hours = 21.0,
+            start_date = startDate.toString(),
+            year_end_month = yearEnd.monthValue,
+            year_end_day = yearEnd.dayOfMonth,
+            default_week = mutableMapOf(
+                "Monday" to 3.0, "Tuesday" to 3.0, "Wednesday" to 3.0,
+                "Thursday" to 3.0, "Friday" to 3.0, "Saturday" to 0.0, "Sunday" to 0.0
+            ),
+            adjustments = mutableMapOf()
+        )
+
+        val metrics = logic.calculateMetrics(config)
+        val chartData = metrics["chart_data"] as List<Map<String, Any>>
+
+        // startDate to yearEnd is 10 + 5 = 15 days, so 16 entries inclusive
+        assertEquals(16, chartData.size)
+        assertEquals(yearEnd.toString(), chartData.last()["date"])
+    }
 }
