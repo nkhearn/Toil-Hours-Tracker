@@ -30,11 +30,17 @@ fun SettingsScreen(
 ) {
     var contractHours by remember { mutableStateOf(TextFieldValue(config.contract_hours.toString())) }
     var startDate by remember { mutableStateOf(config.start_date) }
-    var endMonth by remember { mutableStateOf(TextFieldValue(config.year_end_month.toString())) }
+    var endMonth by remember { mutableIntStateOf(config.year_end_month.coerceIn(1, 12)) }
     var endDay by remember { mutableStateOf(TextFieldValue(config.year_end_day.toString())) }
 
     var showDatePicker by remember { mutableStateOf(false) }
+    var expandedMonth by remember { mutableStateOf(false) }
 
+    val months = remember {
+        java.time.Month.values().map { month ->
+            month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())
+        }
+    }
     val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     val defaultWeek = remember { mutableStateMapOf<String, TextFieldValue>().apply {
         days.forEach { day -> put(day, TextFieldValue((config.default_week?.get(day) ?: 0.0).toString())) }
@@ -114,19 +120,36 @@ fun SettingsScreen(
         }
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = endMonth,
-                onValueChange = { endMonth = it },
-                label = { Text("End Month") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier
-                    .weight(1f)
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            endMonth = endMonth.copy(selection = TextRange(0, endMonth.text.length))
-                        }
+            ExposedDropdownMenuBox(
+                expanded = expandedMonth,
+                onExpandedChange = { expandedMonth = !expandedMonth },
+                modifier = Modifier.weight(1f)
+            ) {
+                OutlinedTextField(
+                    value = months[endMonth - 1],
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("End Month") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedMonth) },
+                    modifier = Modifier.menuAnchor(),
+                    colors = OutlinedTextFieldDefaults.colors()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedMonth,
+                    onDismissRequest = { expandedMonth = false }
+                ) {
+                    months.forEachIndexed { index, month ->
+                        DropdownMenuItem(
+                            text = { Text(month) },
+                            onClick = {
+                                endMonth = index + 1
+                                expandedMonth = false
+                            }
+                        )
                     }
-            )
+                }
+            }
+
             OutlinedTextField(
                 value = endDay,
                 onValueChange = { endDay = it },
@@ -173,7 +196,7 @@ fun SettingsScreen(
                 onSave(
                     contractHours.text.toDoubleOrNull() ?: 21.0,
                     startDate,
-                    endMonth.text.toIntOrNull() ?: 1,
+                    endMonth,
                     endDay.text.toIntOrNull() ?: 1,
                     week
                 )

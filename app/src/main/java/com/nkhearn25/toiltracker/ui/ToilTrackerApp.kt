@@ -26,7 +26,6 @@ sealed class Screen(val route: String, val label: String, val icon: ImageVector)
     object Calendar : Screen("calendar", "Calendar", Icons.Default.DateRange)
     object LogHours : Screen("log_hours", "Log", Icons.Default.Add)
     object History : Screen("history", "History", Icons.AutoMirrored.Filled.List)
-    object Progression : Screen("progression", "Progress", Icons.AutoMirrored.Filled.TrendingUp)
     object Settings : Screen("settings", "Settings", Icons.Default.Settings)
 }
 
@@ -40,8 +39,7 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
         Screen.Dashboard,
         Screen.Calendar,
         Screen.LogHours,
-        Screen.History,
-        Screen.Progression
+        Screen.History
     )
 
     Scaffold(
@@ -118,11 +116,6 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
                         metrics = metrics,
                         onDelete = { date -> viewModel.deleteAdjustment(date) }
                     )
-                }
-            }
-            composable(Screen.Progression.route) {
-                uiState.metrics?.let { metrics ->
-                    ProgressionScreen(metrics = metrics)
                 }
             }
             composable(Screen.Settings.route) {
