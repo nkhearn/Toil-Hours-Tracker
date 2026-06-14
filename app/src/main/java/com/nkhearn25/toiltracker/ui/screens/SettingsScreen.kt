@@ -36,10 +36,11 @@ fun SettingsScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var expandedMonth by remember { mutableStateOf(false) }
 
-    val months = listOf(
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    )
+    val months = remember {
+        java.time.Month.values().map { month ->
+            month.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())
+        }
+    }
     val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     val defaultWeek = remember { mutableStateMapOf<String, TextFieldValue>().apply {
         days.forEach { day -> put(day, TextFieldValue((config.default_week?.get(day) ?: 0.0).toString())) }
