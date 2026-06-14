@@ -7,6 +7,7 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,6 +35,8 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
     val navController = rememberNavController()
     val uiState by viewModel.uiState.collectAsState()
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     val items = listOf(
         Screen.Dashboard,
@@ -43,6 +46,7 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
     )
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -105,6 +109,9 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
                         config = config,
                         onSave = { date, offset, note ->
                             viewModel.saveAdjustment(date, offset, note)
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Entry saved for $date")
+                            }
                             navController.popBackStack(Screen.Calendar.route, inclusive = false)
                         }
                     )
