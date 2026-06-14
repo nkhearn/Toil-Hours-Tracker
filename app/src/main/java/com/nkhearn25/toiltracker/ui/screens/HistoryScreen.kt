@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -20,6 +20,32 @@ fun HistoryScreen(
     metrics: Map<String, Any>,
     onDelete: (String) -> Unit
 ) {
+    var showDeleteConfirm by remember { mutableStateOf<String?>(null) }
+
+    if (showDeleteConfirm != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = null },
+            title = { Text("Confirm Deletion") },
+            text = { Text("Are you sure you want to delete this adjustment? This will revert the day to its standard contractual hours.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDelete(showDeleteConfirm!!)
+                        showDeleteConfirm = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Rose400)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     val adjustments = (metrics["adjustments_list"] as? List<*>)
         ?.filterIsInstance<Map<*, *>>()
         ?: emptyList()
@@ -87,8 +113,12 @@ fun HistoryScreen(
                                     fontWeight = FontWeight.Bold,
                                     color = color
                                 )
-                                IconButton(onClick = { onDelete(dateStr) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Slate400)
+                                IconButton(onClick = { showDeleteConfirm = dateStr }) {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Delete entry for $dateStr",
+                                        tint = Slate400
+                                    )
                                 }
                             }
                         }

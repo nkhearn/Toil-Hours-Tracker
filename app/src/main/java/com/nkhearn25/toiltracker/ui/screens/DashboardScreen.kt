@@ -9,6 +9,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -49,8 +51,15 @@ fun DashboardScreen(
                 style = MaterialTheme.typography.titleLarge,
                 color = Slate200
             )
-            IconButton(onClick = onSetupClick) {
-                Text("⚙️", fontSize = 20.sp)
+            IconButton(
+                onClick = onSetupClick,
+                modifier = Modifier.size(48.dp)
+            ) {
+                Text(
+                    text = "⚙️",
+                    fontSize = 20.sp,
+                    modifier = Modifier.semantics { contentDescription = "Settings" }
+                )
             }
         }
 
