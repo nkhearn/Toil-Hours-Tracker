@@ -30,7 +30,7 @@ fun SettingsScreen(
 ) {
     var contractHours by remember { mutableStateOf(TextFieldValue(config.contract_hours.toString())) }
     var startDate by remember { mutableStateOf(config.start_date) }
-    var endMonth by remember { mutableIntStateOf(config.year_end_month) }
+    var endMonth by remember { mutableIntStateOf(config.year_end_month.coerceIn(1, 12)) }
     var endDay by remember { mutableStateOf(TextFieldValue(config.year_end_day.toString())) }
 
     var showDatePicker by remember { mutableStateOf(false) }
