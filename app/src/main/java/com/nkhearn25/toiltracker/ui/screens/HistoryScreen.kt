@@ -22,7 +22,8 @@ fun HistoryScreen(
 ) {
     var showDeleteConfirm by remember { mutableStateOf<String?>(null) }
 
-    if (showDeleteConfirm != null) {
+    val deleteTarget = showDeleteConfirm
+    if (deleteTarget != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = null },
             title = { Text("Confirm Deletion") },
@@ -30,7 +31,7 @@ fun HistoryScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onDelete(showDeleteConfirm!!)
+                        onDelete(deleteTarget)
                         showDeleteConfirm = null
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = Rose400)
