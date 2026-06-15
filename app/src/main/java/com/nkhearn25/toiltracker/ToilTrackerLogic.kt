@@ -1,6 +1,7 @@
 package com.nkhearn25.toiltracker
 
 import android.content.Context
+import android.net.Uri
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.nkhearn25.toiltracker.data.AdjustmentEntity
@@ -131,6 +132,63 @@ class ToilTrackerLogic(private val context: Context? = null) {
     suspend fun deleteAdjustment(date: String): Config = withContext(Dispatchers.IO) {
         dao?.deleteAdjustment(date)
         loadData()
+    }
+
+    suspend fun exportConfig(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        val configEntity = dao?.getConfig() ?: return@withContext false
+        val json = gson.toJson(configEntity)
+        try {
+            context?.contentResolver?.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(json.toByteArray())
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun importConfig(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val json = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            val configEntity: ConfigEntity? = gson.fromJson(json, ConfigEntity::class.java)
+            if (configEntity != null) {
+                dao?.saveConfig(configEntity)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun exportAdjustments(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        val adjustments = dao?.getAllAdjustments() ?: return@withContext false
+        val json = gson.toJson(adjustments)
+        try {
+            context?.contentResolver?.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(json.toByteArray())
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun importAdjustments(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val json = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+            val type = object : TypeToken<List<AdjustmentEntity>>() {}.type
+            val adjustments: List<AdjustmentEntity>? = gson.fromJson(json, type)
+            if (adjustments != null) {
+                dao?.insertAllAdjustments(adjustments)
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            false
+        }
     }
 
     fun calculateMetrics(config: Config): Map<String, Any> {

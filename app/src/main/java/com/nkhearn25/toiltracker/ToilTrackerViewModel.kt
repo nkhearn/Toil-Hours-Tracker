@@ -1,5 +1,6 @@
 package com.nkhearn25.toiltracker
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,6 +61,40 @@ class ToilTrackerViewModel(private val logic: ToilTrackerLogic) : ViewModel() {
             val config = logic.deleteAdjustment(date)
             val metrics = logic.calculateMetrics(config)
             _uiState.value = ToilTrackerUiState(config, metrics, false)
+        }
+    }
+
+    fun exportConfig(uri: Uri, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val success = logic.exportConfig(uri)
+            onResult(success)
+        }
+    }
+
+    fun importConfig(uri: Uri, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val success = logic.importConfig(uri)
+            if (success) {
+                refreshData()
+            }
+            onResult(success)
+        }
+    }
+
+    fun exportAdjustments(uri: Uri, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val success = logic.exportAdjustments(uri)
+            onResult(success)
+        }
+    }
+
+    fun importAdjustments(uri: Uri, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val success = logic.importAdjustments(uri)
+            if (success) {
+                refreshData()
+            }
+            onResult(success)
         }
     }
 }
