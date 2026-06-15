@@ -47,7 +47,7 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
     )
 
     Scaffold(
-        modifier = Modifier,
+        modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar {
