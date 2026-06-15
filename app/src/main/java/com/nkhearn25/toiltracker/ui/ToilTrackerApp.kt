@@ -1,5 +1,6 @@
 package com.nkhearn25.toiltracker.ui
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -46,6 +47,7 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
     )
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             NavigationBar {
@@ -80,7 +82,9 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
         NavHost(
             navController = navController,
             startDestination = Screen.Dashboard.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
             composable(Screen.Dashboard.route) {
                 uiState.metrics?.let { metrics ->

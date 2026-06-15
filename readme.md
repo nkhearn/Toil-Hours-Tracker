@@ -10,9 +10,10 @@
 
 ## 🚀 Key Features
 
-- 📊 **Dynamic Progression:** Real-time visual tracking of your worked hours vs. contractual baseline.
+- 📱 **Full Screen Experience:** Modern edge-to-edge Android interface for a seamless look.
 - 🔮 **Balance Forecasting:** Predict your year-end hour balance based on current trends.
 - 📱 **Native Performance:** Fully native Android application built with Jetpack Compose.
+- 🗄️ **Robust Storage:** Powered by SQLite (Room) for efficient and reliable data management.
 - ☁️ **Web Companion:** A responsive Flask-based web application for browser-based tracking.
 - 🌙 **Dark Theme Only:** Sleek, high-contrast dark aesthetic optimized for focus and reduced eye strain.
 
@@ -20,9 +21,9 @@
 
 ## 📸 Screenshots (Mobile View)
 
-| Dashboard | History | Progression |
+| Dashboard | History | Calendar |
 | :---: | :---: | :---: |
-| ![Dashboard](screenshots/dashboard.png) | ![History](screenshots/history.png) | ![Progression](screenshots/progression.png) |
+| ![Dashboard](screenshots/dashboard.png) | ![History](screenshots/history.png) | ![Calendar](screenshots/calendar.png) |
 
 ---
 
@@ -34,7 +35,7 @@ The Android version offers a robust, dedicated experience for mobile users.
 ### Tech Stack
 - **Jetpack Compose:** Modern, declarative UI framework.
 - **Kotlin:** Core business logic and ViewModel-driven architecture.
-- **Vico Charts:** High-performance native data visualization.
+- **Room Database:** SQLite-based persistence for better performance.
 - **Android API Level 36:** Optimized for the latest mobile features.
 
 ### Installation
@@ -74,9 +75,8 @@ Tailor the system to your specific contract:
 ## 🛠️ Built With
 
 - [Jetpack Compose](https://developer.android.com/jetpack/compose) - Android's modern toolkit for building native UI.
-- [Vico](https://google.github.io/vico/) - A powerful charting library for Android and Jetpack Compose.
+- [Room](https://developer.android.com/training/data-storage/room) - A persistence library that provides an abstraction layer over SQLite.
 - [Tailwind CSS](https://tailwindcss.com/) - Modern styling for the web companion.
-- [Chart.js](https://www.chartjs.org/) - Data visualization for the web companion.
 - [Flask](https://flask.palletsprojects.com/) - Lightweight Python backend.
 - [Kotlin](https://kotlinlang.org/) - Powering the Android core and logic.
 

@@ -3,6 +3,7 @@ package com.nkhearn25.toiltracker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.nkhearn25.toiltracker.ui.ToilTrackerApp
@@ -13,6 +14,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var viewModel: ToilTrackerViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         val logic = ToilTrackerLogic(this)

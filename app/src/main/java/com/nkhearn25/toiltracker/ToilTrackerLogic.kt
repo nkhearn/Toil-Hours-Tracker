@@ -3,6 +3,11 @@ package com.nkhearn25.toiltracker
 import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.nkhearn25.toiltracker.data.AdjustmentEntity
+import com.nkhearn25.toiltracker.data.ConfigEntity
+import com.nkhearn25.toiltracker.data.ToilTrackerDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.time.LocalDate
 import java.time.YearMonth
@@ -13,6 +18,9 @@ class ToilTrackerLogic(private val context: Context? = null) {
     private val dbFile = context?.let { File(it.filesDir, "hour_tracker_db.json") }
     private val gson = Gson()
     private val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+    private val database = context?.let { ToilTrackerDatabase.getDatabase(it) }
+    private val dao = database?.toilTrackerDao()
 
     data class Adjustment(val hours: Double, val notes: String)
     private data class InternalAdjustment(val date: LocalDate, val dateStr: String, val hours: Double, val notes: String)
@@ -25,10 +33,10 @@ class ToilTrackerLogic(private val context: Context? = null) {
         var adjustments: MutableMap<String, Adjustment>?
     )
 
-    fun loadData(): Config {
+    private fun getFallbackConfig(): Config {
         val today = LocalDate.now()
         val defaultStartDate = "${today.year}-01-01"
-        val fallbackConfig = Config(
+        return Config(
             contract_hours = 21.0,
             start_date = defaultStartDate,
             year_end_month = 12,
@@ -36,82 +44,93 @@ class ToilTrackerLogic(private val context: Context? = null) {
             default_week = days.associateWith { 0.0 }.toMutableMap(),
             adjustments = mutableMapOf()
         )
+    }
 
-        if (dbFile == null || !dbFile.exists()) return fallbackConfig
+    suspend fun loadData(): Config = withContext(Dispatchers.IO) {
+        val fallbackConfig = getFallbackConfig()
 
-        return try {
-            val json = dbFile.readText()
-            val data = gson.fromJson(json, Config::class.java) ?: fallbackConfig
+        // Try to migrate if JSON exists
+        if (dbFile != null && dbFile.exists() && dao != null) {
+            try {
+                val json = dbFile.readText()
+                val data = gson.fromJson(json, Config::class.java)
+                if (data != null) {
+                    // Migrate to Room
+                    val configEntity = ConfigEntity(
+                        contractHours = data.contract_hours,
+                        startDate = data.start_date,
+                        yearEndMonth = data.year_end_month,
+                        yearEndDay = data.year_end_day,
+                        defaultWeekJson = gson.toJson(data.default_week)
+                    )
+                    dao.saveConfig(configEntity)
 
-            // Migration / safety checks
-            var updated = false
-            if (data.default_week == null) {
-                data.default_week = fallbackConfig.default_week
-                updated = true
-            }
-            val currentDefaultWeek = data.default_week!!
-            for (day in days) {
-                if (!currentDefaultWeek.containsKey(day)) {
-                    currentDefaultWeek[day] = 0.0
-                    updated = true
+                    val adjustments = data.adjustments?.map { (date, adj) ->
+                        AdjustmentEntity(date, adj.hours, adj.notes)
+                    } ?: emptyList()
+                    dao.insertAllAdjustments(adjustments)
+
+                    // Delete JSON file after successful migration
+                    dbFile.delete()
                 }
+            } catch (e: Exception) {
+                // Ignore migration errors, will use Room or fallback
             }
-            if (data.adjustments == null) {
-                data.adjustments = mutableMapOf()
-                updated = true
-            }
-            if (updated) saveData(data)
-            data
-        } catch (e: Exception) {
-            fallbackConfig
         }
+
+        if (dao == null) return@withContext fallbackConfig
+
+        val configEntity = dao.getConfig()
+        val adjustmentsEntities = dao.getAllAdjustments()
+
+        if (configEntity == null) return@withContext fallbackConfig
+
+        val type = object : TypeToken<MutableMap<String, Double>>() {}.type
+        val defaultWeek: MutableMap<String, Double> = gson.fromJson(configEntity.defaultWeekJson, type) ?: fallbackConfig.default_week!!
+
+        val adjustments = adjustmentsEntities.associate {
+            it.date to Adjustment(it.hours, it.notes)
+        }.toMutableMap()
+
+        Config(
+            contract_hours = configEntity.contractHours,
+            start_date = configEntity.startDate,
+            year_end_month = configEntity.yearEndMonth,
+            year_end_day = configEntity.yearEndDay,
+            default_week = defaultWeek,
+            adjustments = adjustments
+        )
     }
 
-    fun saveData(config: Config) {
-        dbFile?.writeText(gson.toJson(config))
-    }
-
-    fun updateConfig(
+    suspend fun updateConfig(
         contractHours: Double,
         startDate: String,
         endMonth: Int,
         endDay: Int,
         defaultWeekJson: String
-    ): Config {
-        val config = loadData()
-        config.contract_hours = contractHours
-        config.start_date = startDate
-        config.year_end_month = endMonth
-        config.year_end_day = endDay
-
-        val type = object : TypeToken<MutableMap<String, Double>>() {}.type
-        val newDefaultWeek: MutableMap<String, Double>? = gson.fromJson(defaultWeekJson, type)
-        if (newDefaultWeek != null) {
-            config.default_week = newDefaultWeek
-        }
-
-        saveData(config)
-        return config
+    ): Config = withContext(Dispatchers.IO) {
+        dao?.saveConfig(ConfigEntity(
+            contractHours = contractHours,
+            startDate = startDate,
+            yearEndMonth = endMonth,
+            yearEndDay = endDay,
+            defaultWeekJson = defaultWeekJson
+        ))
+        loadData()
     }
 
-    fun saveAdjustment(date: String, offset: Double, note: String): Config {
-        val config = loadData()
-        val adjustments = config.adjustments ?: mutableMapOf()
+    suspend fun saveAdjustment(date: String, offset: Double, note: String): Config = withContext(Dispatchers.IO) {
         if (offset == 0.0) {
-            adjustments.remove(date)
+            dao?.deleteAdjustment(date)
         } else {
-            adjustments[date] = Adjustment(offset, note)
+            dao?.saveAdjustment(AdjustmentEntity(date, offset, note))
         }
-        config.adjustments = adjustments
-        saveData(config)
-        return config
+        loadData()
     }
 
-    fun deleteAdjustment(date: String): Config {
-        val config = loadData()
-        config.adjustments?.remove(date)
-        saveData(config)
-        return config
+    suspend fun deleteAdjustment(date: String): Config = withContext(Dispatchers.IO) {
+        dao?.deleteAdjustment(date)
+        loadData()
     }
 
     fun calculateMetrics(config: Config): Map<String, Any> {
@@ -200,9 +219,6 @@ class ToilTrackerLogic(private val context: Context? = null) {
             tempWorkedAccum += (dayBase + adjustmentVal)
 
             val workedToRecord = if (runDt.isAfter(finalCalcEndToday)) {
-                // For future dates, we show projected worked as a continuation of the last known worked
-                // Or maybe we don't show it at all? The requirement is "projection to year end".
-                // Let's keep recording it as is, but the balance displayed is for "Today".
                 Math.round(tempWorkedAccum * 10.0) / 10.0
             } else {
                 Math.round(tempWorkedAccum * 10.0) / 10.0

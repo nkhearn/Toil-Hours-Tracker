@@ -1,5 +1,6 @@
 package com.nkhearn25.toiltracker
 
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Test
 import java.time.LocalDate
@@ -9,7 +10,7 @@ class ToilTrackerLogicTest {
     private val logic = ToilTrackerLogic(null)
 
     @Test
-    fun `test initial loadData provides default values`() {
+    fun `test initial loadData provides default values`() = runBlocking {
         val config = logic.loadData()
         assertEquals(21.0, config.contract_hours, 0.0)
         assertEquals(12, config.year_end_month)
