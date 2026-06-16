@@ -167,8 +167,9 @@ class ToilTrackerLogic(private val context: Context? = null) {
         val adjustments = dao?.getAllAdjustments() ?: return@withContext false
         val json = gson.toJson(adjustments)
         try {
-            context?.contentResolver?.openOutputStream(uri)?.use { outputStream ->
-                outputStream.write(json.toByteArray())
+            val outputStream = context?.contentResolver?.openOutputStream(uri) ?: return@withContext false
+            outputStream.use { stream ->
+                stream.write(json.toByteArray())
             }
             true
         } catch (e: Exception) {
