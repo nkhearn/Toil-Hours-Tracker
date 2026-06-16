@@ -148,11 +148,12 @@ class ToilTrackerLogic(private val context: Context? = null) {
     }
 
     suspend fun importConfig(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        val dao = dao ?: return@withContext false
         try {
             val json = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
             val configEntity: ConfigEntity? = gson.fromJson(json, ConfigEntity::class.java)
             if (configEntity != null) {
-                dao?.saveConfig(configEntity)
+                dao.saveConfig(configEntity)
                 true
             } else {
                 false
