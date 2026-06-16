@@ -178,12 +178,13 @@ class ToilTrackerLogic(private val context: Context? = null) {
     }
 
     suspend fun importAdjustments(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        val dao = dao ?: return@withContext false
         try {
             val json = context?.contentResolver?.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
             val type = object : TypeToken<List<AdjustmentEntity>>() {}.type
             val adjustments: List<AdjustmentEntity>? = gson.fromJson(json, type)
             if (adjustments != null) {
-                dao?.insertAllAdjustments(adjustments)
+                dao.insertAllAdjustments(adjustments)
                 true
             } else {
                 false
