@@ -1,5 +1,7 @@
 package com.nkhearn25.toiltracker.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -26,7 +28,12 @@ import java.time.ZoneId
 @Composable
 fun SettingsScreen(
     config: com.nkhearn25.toiltracker.ToilTrackerLogic.Config,
-    onSave: (Double, String, Int, Int, Map<String, Double>) -> Unit
+    onSave: (Double, String, Int, Int, Map<String, Double>) -> Unit,
+    onExportConfig: (android.net.Uri, (Boolean) -> Unit) -> Unit = { _, _ -> },
+    onImportConfig: (android.net.Uri, (Boolean) -> Unit) -> Unit = { _, _ -> },
+    onExportHours: (android.net.Uri, (Boolean) -> Unit) -> Unit = { _, _ -> },
+    onImportHours: (android.net.Uri, (Boolean) -> Unit) -> Unit = { _, _ -> },
+    onMessage: (String) -> Unit = {}
 ) {
     var contractHours by remember { mutableStateOf(TextFieldValue(config.contract_hours.toString())) }
     var startDate by remember { mutableStateOf(config.start_date) }
@@ -206,5 +213,61 @@ fun SettingsScreen(
         ) {
             Text("💾 Save All Settings", fontWeight = FontWeight.Bold)
         }
+
+        HorizontalDivider(color = Slate800)
+        Text(text = "📂 Backup & Restore", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+
+        val exportConfigLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            uri?.let { onExportConfig(it) { success -> onMessage(if (success) "Settings exported successfully" else "Failed to export settings") } }
+        }
+        val importConfigLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let { onImportConfig(it) { success -> onMessage(if (success) "Settings imported successfully" else "Failed to import settings") } }
+        }
+        val exportHoursLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            uri?.let { onExportHours(it) { success -> onMessage(if (success) "Hours exported successfully" else "Failed to export hours") } }
+        }
+        val importHoursLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            uri?.let { onImportHours(it) { success -> onMessage(if (success) "Hours imported successfully" else "Failed to import hours") } }
+        }
+
+        Text(text = "Settings (Cycle date, Default hours, etc.)", style = MaterialTheme.typography.labelSmall, color = Slate400)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { exportConfigLauncher.launch("toil_tracker_settings.json") },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Slate700)
+            ) {
+                Text("📤 Backup Settings")
+            }
+            Button(
+                onClick = { importConfigLauncher.launch(arrayOf("application/json")) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Slate700)
+            ) {
+                Text("📥 Restore Settings")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(text = "Work Hours (History and adjustments)", style = MaterialTheme.typography.labelSmall, color = Slate400)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = { exportHoursLauncher.launch("toil_tracker_hours.json") },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Slate700)
+            ) {
+                Text("📤 Backup Hours")
+            }
+            Button(
+                onClick = { importHoursLauncher.launch(arrayOf("application/json")) },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(containerColor = Slate700)
+            ) {
+                Text("📥 Restore Hours")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }

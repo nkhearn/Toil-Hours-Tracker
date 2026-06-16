@@ -1,6 +1,7 @@
 package com.nkhearn25.toiltracker.ui
 
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -136,6 +137,15 @@ fun ToilTrackerApp(viewModel: ToilTrackerViewModel) {
                         onSave = { hours, start, month, day, week ->
                             viewModel.updateConfig(hours, start, month, day, week)
                             navController.popBackStack()
+                        },
+                        onExportConfig = { uri, onResult -> viewModel.exportConfig(uri, onResult) },
+                        onImportConfig = { uri, onResult -> viewModel.importConfig(uri, onResult) },
+                        onExportHours = { uri, onResult -> viewModel.exportAdjustments(uri, onResult) },
+                        onImportHours = { uri, onResult -> viewModel.importAdjustments(uri, onResult) },
+                        onMessage = { message ->
+                            scope.launch {
+                                snackbarHostState.showSnackbar(message)
+                            }
                         }
                     )
                 }
